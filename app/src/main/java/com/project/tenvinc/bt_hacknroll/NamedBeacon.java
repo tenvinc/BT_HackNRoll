@@ -52,5 +52,36 @@ public class NamedBeacon {
         return minor;
     }
 
-    public Beacon getBeacon() { return beacon; }
+    public Beacon getBeacon() {
+        return beacon;
+    }
+
+    public int getTxPower() {
+        return beacon.getTxPower();
+    }
+
+
+    //Approximation references: https://stackoverflow.com/questions/20416218/understanding-ibeacon-distancing/20434019#20434019
+    public double getApproxDist(int txCalibratedPower, double rssi) {
+        int ratiodB = txCalibratedPower - rssi;
+        double linearRatio = java.lang.Math.pow(10.0, ((double)ratiodB)/10.0);
+        double approxDist = java.lang.Math.sqrt(linearRatio);
+
+        return approxDist;
+    }
+
+    public double getAltApproxDist(int txCalibratedPower, double rssi) {
+        if (rssi == 0) {
+            return -1;
+        }
+
+        double ratio = ((double)rssi)/txCalibratedPower;
+        if (ratio < 1.0) {
+            return Math.pow(ratio,10);
+        }
+        else {
+            double accuracy =  (0.89976)*Math.pow(ratio,7.7095) + 0.111;
+            return accuracy;
+        }
+    }
 }

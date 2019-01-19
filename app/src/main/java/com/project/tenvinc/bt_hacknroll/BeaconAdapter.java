@@ -49,10 +49,15 @@ public class BeaconAdapter extends BaseAdapter {
 
         TextView macText = view.findViewById(R.id.macText);
         TextView nameText = view.findViewById(R.id.nameText);
+        TextView distanceText = view.findViewById(R.id.approxDistance);
         Button ringBtn = view.findViewById(R.id.ringBtn);
 
         macText.setText(data.get(i).getBeacon().getBluetoothAddress());
         nameText.setText(data.get(i).getName());
+
+        int TxPower = data.get(i).getTxPower();
+        double rssi = data.get(i).getRSSI();
+        distanceText.setText(Double.toString(data.get(i).getApproxDist(TxPower, rssi)));
 
         ringBtn.setOnClickListener(new View.OnClickListener() {
             @Override
