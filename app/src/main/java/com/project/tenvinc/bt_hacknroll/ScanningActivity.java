@@ -14,12 +14,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Handler;
+import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListView;
 
@@ -39,6 +38,9 @@ import static android.bluetooth.BluetoothAdapter.STATE_CONNECTED;
 import static java.util.UUID.fromString;
 
 public class ScanningActivity extends AppCompatActivity implements BeaconConsumer {
+
+    // DEBUG
+    private long refTime = System.currentTimeMillis();
 
     private static final String IBEACON_LAYOUT = "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24";
     private BeaconManager manager;
@@ -73,6 +75,7 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scanning);
 
@@ -87,7 +90,10 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
         validatePermissions(this);
 
         manager = BeaconManager.getInstanceForApplication(this);
+        manager.setAndroidLScanningDisabled(true);
         manager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(IBEACON_LAYOUT));
+        manager.setForegroundScanPeriod(10000);
+        manager.setDebug(true);
         //manager.setBeaconSimulator(new MyBeaconSimulator());
 
         manager.bind(this);
@@ -103,7 +109,9 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
         manager.addRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> collection, Region region) {
-                data.clear();
+                //data.clear();
+                Log.d(TAG, "Current time is " + (System.currentTimeMillis() - refTime));
+                Log.d(TAG, "Beacon size is " + collection.size());
                 for (Beacon beacon : collection) {
                     Log.d(TAG, beacon.getBluetoothAddress());
                     NamedBeacon newEntry = new NamedBeacon("UNKNOWN", beacon);
