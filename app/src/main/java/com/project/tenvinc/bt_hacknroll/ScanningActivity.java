@@ -15,45 +15,46 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ListView;
 
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 import static android.bluetooth.BluetoothAdapter.STATE_CONNECTED;
 import static java.util.UUID.fromString;
 
-public class MainActivity extends AppCompatActivity {
-    private Button scanBtn;
-    private ListView btList;
+public class ScanningActivity extends AppCompatActivity implements BeaconConsumer {
 
-    private String TAG = "MainActivity";
+    private static final String IBEACON_LAYOUT = "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24";
+    private BeaconManager manager;
 
     private BluetoothAdapter mBluetoothAdapter;
-
-    private final int REQUEST_ENABLE_BT = 123;
-    private final int PERMISSION_REQUEST_COARSE_LOCATION = 12;
-    private final static int SCAN_PERIOD = 20000;
-
-    private List<String> data = new ArrayList<>();
-
+    private BluetoothGatt bluetoothGatt;
     private final static UUID SERIAL_SERVICE_UUID = fromString("0000dfb0-0000-1000-8000-00805f9b34fb");
     private final static UUID SERIAL_CHAR_UUID = fromString("0000dfb1-0000-1000-8000-00805f9b34fb");
-
-    private boolean mScanning;
-    private Handler mHandler;
-
-    private BluetoothGatt bluetoothGatt;
-
     private BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                ring(gatt);
+            }
+        }
+
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == STATE_CONNECTED) {
@@ -62,45 +63,18 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-        @Override
-        public void onLeScan(final BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    data.add(bluetoothDevice.getAddress());
-                    //Log.d(TAG, bluetoothDevice.getAddress());
-                    if (bluetoothDevice.getAddress().equals("F0:45:DA:10:B5:37")) {
-                        bluetoothGatt = bluetoothDevice.connectGatt(MainActivity.this, true, gattCallback);
-                        Log.d(TAG, bluetoothDevice.getAddress());
-                        Log.d(TAG, SERIAL_SERVICE_UUID.toString());
-                        Log.d(TAG, bluetoothGatt.toString());
-                        for (BluetoothGattService s : bluetoothGatt.getServices()) {
-                            Log.d(TAG, s.toString());
-                        }
+    private final String TAG = "ScanningActivity";
 
-                        BluetoothGattService service = bluetoothGatt.getService(SERIAL_SERVICE_UUID);
-                        Log.d(TAG, service.toString());
-                        BluetoothGattCharacteristic characteristic =
-                                service.getCharacteristic(SERIAL_CHAR_UUID);
-                        Log.d(TAG, characteristic.toString());
-                        String data = "1";
-                        characteristic.setValue(data.getBytes());
-                        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-                        bluetoothGatt.writeCharacteristic(characteristic);
-                        Log.d(TAG, "finished sending data");
-                    }
-                }
-            });
-        }
-    };
+    private final int REQUEST_ENABLE_BT = 123;
+    private final int PERMISSION_REQUEST_COARSE_LOCATION = 12;
+
+    private ListView beaconList;
+    private List<NamedBeacon> data;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        mHandler = new Handler();
+        setContentView(R.layout.activity_scanning);
 
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
@@ -110,43 +84,43 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
-        Button scanBtn = findViewById(R.id.scanBtn);
-        scanBtn.setOnClickListener(new View.OnClickListener() {
+        validatePermissions(this);
+
+        manager = BeaconManager.getInstanceForApplication(this);
+        manager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(IBEACON_LAYOUT));
+        //manager.setBeaconSimulator(new MyBeaconSimulator());
+
+        manager.bind(this);
+
+        data = new ArrayList<>();
+        beaconList = findViewById(R.id.beaconList);
+        beaconList.setAdapter(new BeaconAdapter(this, data));
+    }
+
+    @Override
+    public void onBeaconServiceConnect() {
+        manager.removeAllRangeNotifiers();
+        manager.addRangeNotifier(new RangeNotifier() {
             @Override
-            public void onClick(View view) {
-                scanBtLe(true);
+            public void didRangeBeaconsInRegion(Collection<Beacon> collection, Region region) {
+                data.clear();
+                for (Beacon beacon : collection) {
+                    Log.d(TAG, beacon.getBluetoothAddress());
+                    NamedBeacon newEntry = new NamedBeacon("UNKNOWN", beacon);
+                    data.add(newEntry);
+                }
+                BeaconAdapter adapter = (BeaconAdapter) beaconList.getAdapter();
+                adapter.setData(data);
+                adapter.notifyDataSetChanged();
             }
         });
 
-        btList = findViewById(R.id.btList);
-        btList.setAdapter(new BtAdapter(this, data));
-
-        validatePermissions(this);
+        try {
+            manager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+        } catch (RemoteException e) {    }
     }
 
-    private void scanBtLe(boolean enable) {
-        if (enable) {
-            data.clear();
-            // Stops scanning after a pre-defined scan period.
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mScanning = false;
-                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                    Log.d(TAG, "STOPPED");
-                    BtAdapter adapter = (BtAdapter) btList.getAdapter();
-                    adapter.setData(data);
-                    adapter.notifyDataSetChanged();
-                }
-            }, SCAN_PERIOD);
 
-            mScanning = true;
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
-        } else {
-            mScanning = false;
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-        }
-    }
 
     private void validatePermissions(final Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -194,5 +168,24 @@ public class MainActivity extends AppCompatActivity {
             default:
                 Log.e(TAG, "Something has gone wrong");
         }
+    }
+
+    public void startRingBeacon(String beaconMac) {
+        BluetoothDevice bluetoothDevice = mBluetoothAdapter.getRemoteDevice(beaconMac);
+        bluetoothGatt = bluetoothDevice.connectGatt(this, true, gattCallback);
+    }
+
+    public void ring(BluetoothGatt bluetoothGatt) {
+        BluetoothGattService service = bluetoothGatt.getService(SERIAL_SERVICE_UUID);
+        Log.d(TAG, service.toString());
+        BluetoothGattCharacteristic characteristic =
+                service.getCharacteristic(SERIAL_CHAR_UUID);
+        Log.d(TAG, characteristic.toString());
+        String data = "1";
+        characteristic.setValue(data.getBytes());
+        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+        bluetoothGatt.writeCharacteristic(characteristic);
+        Log.d(TAG, "finished sending data");
+        bluetoothGatt.close();
     }
 }
