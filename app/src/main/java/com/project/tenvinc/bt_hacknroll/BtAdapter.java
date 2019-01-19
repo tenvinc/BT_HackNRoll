@@ -7,34 +7,49 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.TextView;
+
+import java.util.List;
 
 public class BtAdapter extends BaseAdapter {
 
     private LayoutInflater inflater;
     private AppCompatActivity context;
+    private List<String> data;
 
-    public BtAdapter(Context context) {
+    public BtAdapter(Context context, List<String> data) {
         inflater = LayoutInflater.from(context);
         this.context = (AppCompatActivity) context;
+        this.data = data;
+    }
+
+    public void setData(List<String> data) {
+        this.data = data;
     }
 
     @Override
     public int getCount() {
-        return 0;
+        return data.size();
     }
 
     @Override
     public Object getItem(int i) {
-        return null;
+        return data.get(i);
     }
 
     @Override
     public long getItemId(int i) {
-        return 0;
+        return i;
     }
 
     @Override
-    public View getView(int i, View view, ViewGroup viewGroup) {
-        return null;
+    public View getView(int i, View view, ViewGroup parent) {
+        view = inflater.inflate(R.layout.list_bt, parent, false);
+
+        TextView macText = view.findViewById(R.id.macText);
+
+        macText.setText(data.get(i));
+
+        return view;
     }
 }
