@@ -130,7 +130,7 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
         manager.addRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> collection, Region region) {
-                //data.clear();
+                data.clear();
                 Log.d(TAG, "Current time is " + (System.currentTimeMillis() - refTime));
                 Log.d(TAG, "Beacon size is " + collection.size());
                 for (Beacon beacon : collection) {
@@ -139,6 +139,7 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
                     data.add(newEntry);
                 }
                 BeaconAdapter adapter = (BeaconAdapter) beaconList.getAdapter();
+                DataCentre.getInstance().beacons = data;
                 adapter.setData(data);
                 adapter.notifyDataSetChanged();
             }

@@ -7,6 +7,7 @@ import java.util.jar.Attributes;
 public class DataCentre {
     private static final DataCentre ourInstance = new DataCentre();
     public List<NamedBeacon> trackedBeacons = new ArrayList<>();
+    public List<NamedBeacon> beacons = new ArrayList<>();
 
     public static DataCentre getInstance() {
         return ourInstance;

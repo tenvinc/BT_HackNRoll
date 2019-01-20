@@ -147,5 +147,9 @@ public class DetailActivity extends AppCompatActivity implements KeepDialogListe
     @Override
     public void keep(String name, int i) {
         nameView.setText(name);
+        NamedBeacon beacon = DataCentre.getInstance().beacons.get(i);
+        beacon.setName(name);
+        DataCentre.getInstance().beacons.remove(i);
+        DataCentre.getInstance().beacons.add(i, beacon);
     }
 }
