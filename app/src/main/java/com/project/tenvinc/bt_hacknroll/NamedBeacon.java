@@ -63,8 +63,8 @@ public class NamedBeacon {
 
     //Approximation references: https://stackoverflow.com/questions/20416218/understanding-ibeacon-distancing/20434019#20434019
     public double getApproxDist(int txCalibratedPower, double rssi) {
-        int ratiodB = txCalibratedPower - rssi;
-        double linearRatio = java.lang.Math.pow(10.0, ((double)ratiodB)/10.0);
+        double ratiodB = txCalibratedPower - rssi;
+        double linearRatio = java.lang.Math.pow(10.0, (ratiodB)/10.0);
         double approxDist = java.lang.Math.sqrt(linearRatio);
 
         return approxDist;

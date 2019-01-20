@@ -1,6 +1,7 @@
 package com.project.tenvinc.bt_hacknroll;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -55,9 +56,23 @@ public class BeaconAdapter extends BaseAdapter {
         macText.setText(data.get(i).getBeacon().getBluetoothAddress());
         nameText.setText(data.get(i).getName());
 
-        int TxPower = data.get(i).getTxPower();
-        double rssi = data.get(i).getRSSI();
-        distanceText.setText(Double.toString(data.get(i).getApproxDist(TxPower, rssi)));
+        int TxPower = -70;  //Constant from measurement
+        double rssi = data.get(i).getBeacon().getRssi();
+        //distanceText.setText(Double.toString(rssi));
+        double distance = data.get(i).getAltApproxDist(TxPower, rssi);
+        if (distance < 2) {
+            distanceText.setText("Very Near!");
+            distanceText.setTextColor(Color.rgb(0, 200, 0));
+        } else if (distance < 5) {
+            distanceText.setText("Nearby.");
+            distanceText.setTextColor(Color.rgb(204, 204, 0));
+        } else if (distance != -1){
+            distanceText.setText("Not Nearby");
+            distanceText.setTextColor(Color.rgb(200, 0, 0));
+        } else {
+            distanceText.setText("Can't find");
+            distanceText.setTextColor(Color.BLACK);
+        }
 
         ringBtn.setOnClickListener(new View.OnClickListener() {
             @Override
