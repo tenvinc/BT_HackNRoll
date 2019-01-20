@@ -135,8 +135,21 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
                 Log.d(TAG, "Beacon size is " + collection.size());
                 for (Beacon beacon : collection) {
                     Log.d(TAG, beacon.getBluetoothAddress());
-                    NamedBeacon newEntry = new NamedBeacon("UNKNOWN", beacon);
-                    data.add(newEntry);
+
+                    NamedBeacon newEntry = new NamedBeacon(beacon.getBluetoothName(), beacon);
+                    boolean found = false;
+                    for (int i=0; i<data.size(); i++) {
+                        if (data.get(i).getMacAddress() == newEntry.getMacAddress()) {
+                            data.remove(i);
+                            data.add(newEntry);
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found == false) {
+                        data.add(newEntry);
+                    }
                 }
                 BeaconAdapter adapter = (BeaconAdapter) beaconList.getAdapter();
                 DataCentre.getInstance().beacons = data;

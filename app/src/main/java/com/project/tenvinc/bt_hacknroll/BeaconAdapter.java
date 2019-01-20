@@ -11,6 +11,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class BeaconAdapter extends BaseAdapter {
@@ -54,12 +55,16 @@ public class BeaconAdapter extends BaseAdapter {
         TextView nameText = view.findViewById(R.id.nameText);
         TextView distanceText = view.findViewById(R.id.approxDistance);
         Button ringBtn = view.findViewById(R.id.ringBtn);
+        TextView rssiText = view.findViewById(R.id.rssi);
 
         macText.setText(data.get(i).getBeacon().getBluetoothAddress());
         nameText.setText(data.get(i).getName());
 
         int TxPower = -70;  //Constant from measurement
         double rssi = data.get(i).getBeacon().getRssi();
+
+        rssiText.setText(Double.toString(rssi));
+
         //distanceText.setText(Double.toString(rssi));
         double distance = data.get(i).getAltApproxDist(TxPower, rssi);
         if (distance < 2) {
