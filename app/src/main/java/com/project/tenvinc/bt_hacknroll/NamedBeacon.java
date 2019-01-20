@@ -75,7 +75,7 @@ public class NamedBeacon {
             return -1;
         }
 
-        double ratio = ((double)rssi)/txCalibratedPower;
+        double ratio = (rssi)/txCalibratedPower;
         if (ratio < 1.0) {
             return Math.pow(ratio,10);
         }
