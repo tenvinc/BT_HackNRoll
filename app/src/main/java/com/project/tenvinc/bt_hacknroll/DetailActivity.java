@@ -3,12 +3,13 @@ package com.project.tenvinc.bt_hacknroll;
 import android.Manifest;
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -24,7 +25,12 @@ import java.util.List;
 public class DetailActivity extends AppCompatActivity {
     private List<String> data = new ArrayList<>();
     private FusedLocationProviderClient mFusedLocationClient;
-    TextView detailView = findViewById(R.id.detailView);
+    private TextView detailView;
+    private TextView nameView;
+    private TextView majorView;
+    private TextView uuidView;
+    private TextView minorView;
+    private TextView macView;
     private final int PERMISSION_REQUEST_COARSE_LOCATION = 12;
     private final int PERMISSION_REQUEST_FINE_LOCATION = 13;
     private String TAG = "DetailActivity";
@@ -44,6 +50,22 @@ public class DetailActivity extends AppCompatActivity {
             }
         });
         validatePermissions(this);
+
+        Intent intent = getIntent();
+        nameView = findViewById(R.id.nameView);
+        majorView = findViewById(R.id.majorView);
+        uuidView = findViewById(R.id.uuidView);
+        minorView = findViewById(R.id.minorView);
+        macView = findViewById(R.id.macView);
+        detailView = findViewById(R.id.detailView);
+
+
+        nameView.setText(intent.getStringExtra("name"));
+        macView.setText(intent.getStringExtra("mac"));
+        uuidView.setText(intent.getStringExtra("uuid"));
+        minorView.setText(intent.getStringExtra("minor"));
+        majorView.setText(intent.getStringExtra("major"));
+
     }
 
     private void validatePermissions(final Activity activity) {

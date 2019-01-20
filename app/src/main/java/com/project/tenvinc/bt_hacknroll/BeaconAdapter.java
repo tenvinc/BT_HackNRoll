@@ -28,6 +28,8 @@ public class BeaconAdapter extends BaseAdapter {
         this.data = data;
     }
 
+    public List<NamedBeacon> getData() { return data; }
+
     @Override
     public int getCount() {
         return data.size();

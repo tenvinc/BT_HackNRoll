@@ -15,42 +15,41 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.RemoteException;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListView;
 
-import org.altbeacon.beacon.Beacon;
-import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
-import org.altbeacon.beacon.BeaconParser;
-import org.altbeacon.beacon.RangeNotifier;
-import org.altbeacon.beacon.Region;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static android.bluetooth.BluetoothAdapter.STATE_CONNECTED;
 import static java.util.UUID.fromString;
 
-public class ScanningActivity extends AppCompatActivity implements BeaconConsumer {
-
-    // DEBUG
-    private long refTime = System.currentTimeMillis();
+public class ScanningActivityB extends AppCompatActivity {
+    /** To uncomment later.
 
     private static final String IBEACON_LAYOUT = "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24";
-    private BeaconManager manager;
-
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothGatt bluetoothGatt;
     private final static UUID SERIAL_SERVICE_UUID = fromString("0000dfb0-0000-1000-8000-00805f9b34fb");
     private final static UUID SERIAL_CHAR_UUID = fromString("0000dfb1-0000-1000-8000-00805f9b34fb");
+    private final String TAG = "ScanningActivity";
+    private final int REQUEST_ENABLE_BT = 123;
+    private final int PERMISSION_REQUEST_COARSE_LOCATION = 12;
+    // DEBUG
+    private long refTime = System.currentTimeMillis();
+    private BeaconManager manager;
+    private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothGatt bluetoothGatt;
     private BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
@@ -66,12 +65,6 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
             }
         }
     };
-
-    private final String TAG = "ScanningActivity";
-
-    private final int REQUEST_ENABLE_BT = 123;
-    private final int PERMISSION_REQUEST_COARSE_LOCATION = 12;
-
     private ListView beaconList;
     private List<NamedBeacon> data;
 
@@ -91,63 +84,12 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
 
         validatePermissions(this);
 
-        manager = BeaconManager.getInstanceForApplication(this);
-        manager.setAndroidLScanningDisabled(true);
-        manager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(IBEACON_LAYOUT));
-        //manager.setDebug(true);
-        manager.setBeaconSimulator(new MyBeaconSimulator());
-
         data = new ArrayList<>();
         beaconList = findViewById(R.id.beaconList);
         beaconList.setAdapter(new BeaconAdapter(this, data));
-        beaconList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                BeaconAdapter adapter = (BeaconAdapter) beaconList.getAdapter();
-                NamedBeacon beacon = adapter.getData().get(i);
 
-                Intent intent = new Intent(ScanningActivity.this, DetailActivity.class);
-                intent.putExtra("name", beacon.getName());
-                intent.putExtra("mac", beacon.getBeacon().getBluetoothAddress());
-                intent.putExtra("uuid", beacon.getBeacon().getId1().toString());
-                intent.putExtra("major", beacon.getBeacon().getId2().toString());
-                intent.putExtra("minor", beacon.getBeacon().getId3().toString());
-                intent.putExtra("rssi", beacon.getBeacon().getRssi());
-                startActivity(intent);
-
-            }
-        });
-
-        manager.bind(this);
-
+        startBLEScan();
     }
-
-    @Override
-    public void onBeaconServiceConnect() {
-        manager.removeAllRangeNotifiers();
-        manager.addRangeNotifier(new RangeNotifier() {
-            @Override
-            public void didRangeBeaconsInRegion(Collection<Beacon> collection, Region region) {
-                //data.clear();
-                Log.d(TAG, "Current time is " + (System.currentTimeMillis() - refTime));
-                Log.d(TAG, "Beacon size is " + collection.size());
-                for (Beacon beacon : collection) {
-                    Log.d(TAG, beacon.getBluetoothAddress());
-                    NamedBeacon newEntry = new NamedBeacon("UNKNOWN", beacon);
-                    data.add(newEntry);
-                }
-                BeaconAdapter adapter = (BeaconAdapter) beaconList.getAdapter();
-                adapter.setData(data);
-                adapter.notifyDataSetChanged();
-            }
-        });
-
-        try {
-            manager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
-        } catch (RemoteException e) {    }
-    }
-
-
 
     private void validatePermissions(final Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -197,6 +139,23 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
         }
     }
 
+    public void startBLEScan() {
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        BluetoothTask bluetoothTask1 = new BluetoothTask("BluetoothTask 1");
+
+        System.out.println("The time is : " + new Date());
+
+        ScheduledFuture<?> result = executor.scheduleAtFixedRate(bluetoothTask1, 2, 10, TimeUnit.SECONDS);
+
+        try {
+            TimeUnit.MILLISECONDS.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        executor.shutdown();
+    }
+
     public void startRingBeacon(String beaconMac) {
         BluetoothDevice bluetoothDevice = mBluetoothAdapter.getRemoteDevice(beaconMac);
         bluetoothGatt = bluetoothDevice.connectGatt(this, true, gattCallback);
@@ -215,4 +174,79 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
         Log.d(TAG, "finished sending data");
         bluetoothGatt.close();
     }
+
+    private void singleBluetoothScan(BluetoothDevice bluetoothDevice, int i, byte[] bytes) {
+        IBeaconParser.ScannedBleDevice device = new IBeaconParser().ParseRawScanRecord(bluetoothDevice, i, bytes, null);
+        if (!bluetoothDevice.getAddress().startsWith("F0:45:DA:10:B5")) {
+            return;
+        }
+        if (!device.isIBeacon) {
+            Log.d(TAG, "Device is not iBeacon");
+        } else {
+            NamedBeacon newBeacon = new NamedBeacon("Unknown", device.MacAddress, device.toHex(device.IbeaconProximityUUID),
+                    device.toHex(device.Major), device.toHex(device.Minor), device.RSSI);
+            Log.d(TAG, bluetoothDevice.getAddress());
+            data.add(newBeacon);
+        }
+    }
+
+    class BluetoothTask implements Runnable {
+        private String name;
+        private Handler mHandler;
+        private int SCAN_PERIOD = 10000;
+
+        private boolean mScanning;
+
+        private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+            @Override
+            public void onLeScan(final BluetoothDevice bluetoothDevice, final int i, final byte[] bytes) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        singleBluetoothScan(bluetoothDevice, i, bytes);
+                    }
+                });
+            }
+        };
+
+        public BluetoothTask(String name) {
+            this.name = name;
+            mHandler = new Handler();
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Log.d(name, "Starting ble scan");
+                scanBtLe();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void scanBtLe() {
+            if (mScanning) return;
+            data.clear();
+            // Stops scanning after a pre-defined scan period.
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                    Log.d(TAG, "STOPPED");
+                    BeaconAdapter adapter = (BeaconAdapter) beaconList.getAdapter();
+                    adapter.setData(data);
+                    adapter.notifyDataSetChanged();
+                    mScanning = false;
+                }
+            }, SCAN_PERIOD);
+
+            mBluetoothAdapter.startLeScan(mLeScanCallback);
+            mScanning = true;
+        }
+    }
+     */
 }

@@ -32,7 +32,7 @@ import static android.bluetooth.BluetoothAdapter.STATE_CONNECTED;
 import static java.util.UUID.fromString;
 
 public class MainActivity extends AppCompatActivity {
-    private Button scanBtn;
+    /*private Button scanBtn;
     private ListView btList;
 
     private String TAG = "MainActivity";
@@ -194,5 +194,5 @@ public class MainActivity extends AppCompatActivity {
             default:
                 Log.e(TAG, "Something has gone wrong");
         }
-    }
+    }*/
 }
