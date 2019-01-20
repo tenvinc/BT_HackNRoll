@@ -26,6 +26,7 @@ public class NamedBeacon {
     public NamedBeacon(String name, Beacon beacon) {
         this.name = name;
         this.beacon = beacon;
+        this.RSSI = beacon.getRssi();
     }
 
     public String getName() {
@@ -58,6 +59,10 @@ public class NamedBeacon {
 
     public Beacon getBeacon() {
         return beacon;
+    }
+
+    public void setRssi(double value) {
+        RSSI = value;
     }
 
     public int getTxPower() {

@@ -94,9 +94,11 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
 
         manager = BeaconManager.getInstanceForApplication(this);
         manager.setAndroidLScanningDisabled(true);
+        manager.setForegroundScanPeriod(2000);
+        manager.setForegroundBetweenScanPeriod(1000);
         manager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(IBEACON_LAYOUT));
         //manager.setDebug(true);
-        manager.setBeaconSimulator(new MyBeaconSimulator());
+        //manager.setBeaconSimulator(new MyBeaconSimulator());
 
         data = new ArrayList<>();
         beaconList = findViewById(R.id.beaconList);
@@ -130,7 +132,6 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
         manager.addRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> collection, Region region) {
-                data.clear();
                 Log.d(TAG, "Current time is " + (System.currentTimeMillis() - refTime));
                 Log.d(TAG, "Beacon size is " + collection.size());
                 for (Beacon beacon : collection) {
@@ -149,6 +150,20 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
 
                     if (found == false) {
                         data.add(newEntry);
+                    }
+                }
+
+                for (int i=0; i<DataCentre.getInstance().trackedBeacons.size(); i++) {
+                    boolean found = false;
+                    for (int j=0; j<data.size(); j++) {
+                        if (data.get(j).getMacAddress() == DataCentre.getInstance().trackedBeacons.get(i).getMacAddress()) {
+                            data.get(j).setName(DataCentre.getInstance().trackedBeacons.get(i).getName());
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        data.add(DataCentre.getInstance().trackedBeacons.get(i));
                     }
                 }
                 BeaconAdapter adapter = (BeaconAdapter) beaconList.getAdapter();

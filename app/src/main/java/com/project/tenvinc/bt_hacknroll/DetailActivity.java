@@ -149,7 +149,6 @@ public class DetailActivity extends AppCompatActivity implements KeepDialogListe
         nameView.setText(name);
         NamedBeacon beacon = DataCentre.getInstance().beacons.get(i);
         beacon.setName(name);
-        DataCentre.getInstance().beacons.remove(i);
-        DataCentre.getInstance().beacons.add(i, beacon);
+        DataCentre.getInstance().trackedBeacons.add(i, beacon);
     }
 }

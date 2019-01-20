@@ -61,7 +61,7 @@ public class BeaconAdapter extends BaseAdapter {
         nameText.setText(data.get(i).getName());
 
         int TxPower = -70;  //Constant from measurement
-        double rssi = data.get(i).getBeacon().getRssi();
+        double rssi = data.get(i).getRSSI();
 
         rssiText.setText(Double.toString(rssi));
 
