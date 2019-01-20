@@ -43,6 +43,7 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
 
     // DEBUG
     private long refTime = System.currentTimeMillis();
+    public List<NamedBeacon> tracked_data;
 
     private static final String IBEACON_LAYOUT = "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24";
     private BeaconManager manager;
@@ -113,6 +114,7 @@ public class ScanningActivity extends AppCompatActivity implements BeaconConsume
                 intent.putExtra("major", beacon.getBeacon().getId2().toString());
                 intent.putExtra("minor", beacon.getBeacon().getId3().toString());
                 intent.putExtra("rssi", beacon.getBeacon().getRssi());
+                intent.putExtra("pos", i);
                 startActivity(intent);
 
             }

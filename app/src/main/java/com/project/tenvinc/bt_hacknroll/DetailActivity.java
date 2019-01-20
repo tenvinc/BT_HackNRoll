@@ -2,6 +2,7 @@ package com.project.tenvinc.bt_hacknroll;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -22,7 +23,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements KeepDialogListener{
     private List<String> data = new ArrayList<>();
     private FusedLocationProviderClient mFusedLocationClient;
     private TextView detailView;
@@ -34,6 +35,7 @@ public class DetailActivity extends AppCompatActivity {
     private final int PERMISSION_REQUEST_COARSE_LOCATION = 12;
     private final int PERMISSION_REQUEST_FINE_LOCATION = 13;
     private String TAG = "DetailActivity";
+    private int pos;
 
 
     @Override
@@ -47,6 +49,11 @@ public class DetailActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 locationBtLe(true);
+                AddDialog dialog = new AddDialog();
+                Bundle data = new Bundle();
+                data.putInt("pos", pos);
+                dialog.setArguments(data);
+                dialog.show(getSupportFragmentManager(), "add to tracked");
             }
         });
         validatePermissions(this);
@@ -58,6 +65,7 @@ public class DetailActivity extends AppCompatActivity {
         minorView = findViewById(R.id.minorView);
         macView = findViewById(R.id.macView);
         detailView = findViewById(R.id.detailView);
+        pos = intent.getIntExtra("pos", -1);
 
 
         nameView.setText(intent.getStringExtra("name"));
@@ -134,5 +142,10 @@ public class DetailActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    @Override
+    public void keep(String name, int i) {
+        nameView.setText(name);
     }
 }
